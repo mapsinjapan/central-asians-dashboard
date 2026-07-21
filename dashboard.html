@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central Asians in Japan | Prefecture Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2230;
+    --ink-soft:#4a5268;
+    --ink-faint:#8790a3;
+    --paper:#f5f4f0;
+    --card:#ffffff;
+    --line:#e2e0d8;
+    --accent:#b0522d;
+    --accent-soft:#f0ddd2;
+    --steppe:#5c6f5d;
+    --steppe-soft:#e2e8de;
+    --blue-deep:#2b5876;
+    --red-deep:#9a3324;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(28,34,48,0.06), 0 4px 14px rgba(28,34,48,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .wrap{max-width:1400px;margin:0 auto;padding:20px 24px 40px;}
+
+  /* HEADER */
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  header.top .titleblock{max-width:640px;}
+  header.top h1{
+    font-size:26px;
+    font-weight:800;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  header.top p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    line-height:1.55;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--accent);
+    font-weight:500;
+    margin-bottom:8px;
+    display:block;
+  }
+
+  /* FILTER + KPI ROW */
+  .control-row{
+    display:flex;
+    gap:16px;
+    align-items:stretch;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .filter-panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+    flex:1 1 340px;
+    min-width:300px;
+  }
+  .filter-panel .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-faint);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .badges{display:flex;flex-direction:column;gap:10px;}
+  .badge-group{display:flex;flex-wrap:wrap;gap:8px;}
+  .badge-divider{border-top:1px solid var(--line);}
+  .badge{
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .badge:hover{border-color:var(--accent);color:var(--accent);}
+  .badge.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .badge.active.all{background:var(--steppe);border-color:var(--steppe);}
+
+  .kpi-row{
+    display:flex;
+    gap:12px;
+    flex:1 1 500px;
+    min-width:320px;
+  }
+  .kpi{
+    flex:1;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-width:0;
+  }
+  .kpi .kpi-label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-faint);
+    font-weight:600;
+    margin-bottom:4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .kpi .kpi-value{
+    font-size:22px;
+    font-weight:800;
+    color:var(--ink);
+    line-height:1.15;
+    font-family:'IBM Plex Mono',monospace;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .kpi .kpi-sub{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin-top:2px;
+  }
+
+  /* MAIN GRID */
+  .main-grid{
+    display:grid;
+    grid-template-columns:2.1fr 1fr;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  @media (max-width:920px){
+    .main-grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+  }
+  .panel h2{
+    font-size:14.5px;
+    font-weight:700;
+    margin:0 0 2px;
+  }
+  .panel .panel-sub{
+    font-size:12px;
+    color:var(--ink-faint);
+    margin-bottom:10px;
+  }
+
+  #map{
+    height:560px;
+    border-radius:8px;
+    background:rgb(148, 143, 141);
+  }
+  .leaflet-container{font-family:'Manrope',sans-serif;}
+
+  .map-legend{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:10px;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .legend-scale{
+    flex:1;
+    height:10px;
+    border-radius:5px;
+    background:linear-gradient(to right, #2b5876, #7fa3ba, #e8e6df, #d99a83, #9a3324);
+  }
+
+  .legend-categories{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:8px;
+  }
+  .legend-cat{
+    display:flex;
+    flex-direction:column;
+    font-size:11px;
+    line-height:1.3;
+  }
+  .legend-cat b{
+    font-size:12px;
+    font-weight:700;
+  }
+  .legend-cat span{
+    color:var(--ink-faint);
+  }
+
+  .map-caption{
+    margin-top:10px;
+    font-size:11.5px;
+    line-height:1.5;
+    color:var(--ink-faint);
+  }
+
+  .chart-stack{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .chart-box{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:14px 16px;
+  }
+  .chart-box h3{
+    font-size:13px;
+    font-weight:700;
+    margin:0 0 8px;
+  }
+  .chart-box .chart-holder{
+    position:relative;
+    height:150px;
+  }
+  .chart-box .chart-holder.tall{height:190px;}
+
+  /* FOOTER */
+  footer.bottom{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+  footer.bottom .fnote strong{color:var(--ink-soft);}
+
+  /* Tooltip custom */
+  .leaflet-tooltip.pref-tip{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:'Manrope',sans-serif;
+    font-size:12.5px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  }
+  .leaflet-tooltip.pref-tip::before{border-top-color:var(--ink);}
+  .tip-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
+  .tip-title{font-weight:700;font-size:13px;}
+  .tip-badge{font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+  .tip-row{display:flex;justify-content:space-between;gap:14px;color:#d8dae0;}
+  .tip-row b{color:#fff;font-family:'IBM Plex Mono',monospace;}
+  .tip-note{font-size:11px;line-height:1.4;color:#b7bac2;margin:4px 0 6px;max-width:220px;}
+
+  @media (max-width:640px){
+    header.top h1{font-size:21px;}
+    #map{height:400px;}
+    .kpi .kpi-value{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="titleblock">
+      <span class="eyebrow">Prefecture-level residence data</span>
+      <h1>Central Asians in Japan</h1>
+      <p>Explore the geographic distribution, nationality composition, visa status, and demographics of Central Asian residents in Japan at the prefecture level.</p>
+    </div>
+  </header>
+
+  <div class="control-row">
+    <div class="filter-panel">
+      <div class="label">Filter by nationality</div>
+      <div class="badges" id="badgeRow"></div>
+    </div>
+    <div class="kpi-row" id="kpiRow"></div>
+  </div>
+
+  <div class="main-grid">
+    <div class="panel">
+      <h2 id="mapTitle">Distribution Across Prefectures</h2>
+      <div class="panel-sub" id="mapSub">Concentration score of Central Asian share vs. national baseline (100 = average)</div>
+      <div id="map"></div>
+      <div class="map-legend">
+        <div class="legend-scale"></div>
+      </div>
+      <div class="legend-categories">
+        <div class="legend-cat"><b style="color:#2b5876">Underrepresented</b><span>Fewer than expected</span></div>
+        <div class="legend-cat"><b style="color:#8a8175">Typical</b><span>Matches national pattern</span></div>
+        <div class="legend-cat"><b style="color:#9a3324">Above average</b><span>More than expected</span></div>
+      </div>
+      <p class="map-caption">The concentration score shows whether a group is more or less common in a prefecture than population patterns alone would predict. A score of 100 means the prefecture matches the national average exactly. A score of 200 means the group is twice as concentrated there as average, while 50 means half as concentrated.</p>
+    </div>
+
+    <div class="chart-stack">
+      <div class="chart-box">
+        <h3 id="barTitle">Top Prefectures by Central Asian Population</h3>
+        <div class="chart-holder tall"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3 id="pieSexTitle">Gender Ratio</h3>
+        <div class="chart-holder"><canvas id="sexChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3 id="pieVisaTitle">Visa Types</h3>
+        <div class="chart-holder"><canvas id="visaChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bottom">
+    <div class="fnote"><strong>Source:</strong> <span id="srcNote"></span></div>
+    <div class="fnote"><strong>Last updated:</strong> <span id="updNote"></span></div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="data_inject.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
